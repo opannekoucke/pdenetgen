@@ -5,10 +5,8 @@ PDE-NetGen: from symbolic PDE representations of physical processes to trainable
 ---
 <h2><center>Contents</center></h2>
 
-
- 1. [Introduction](#introduction)
- 1. [Installation](#install)
-
+  1. [Introduction](#introduction)
+  1. [Installation](#install)
 ---
 
 
@@ -22,5 +20,5 @@ Introduction <a id='introduction'/>
 Install <a id='install'>
 -----------------------------
 
-
-
+ 1. Clone the repository `git clone https://github.com/opannekoucke/pdenetgen.git`
+ 1. Install the package `make install` (or `python setup.py install`)
