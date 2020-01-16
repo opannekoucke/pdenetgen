@@ -1,0 +1,17 @@
+**/__pycache__
+**/*.pyc
+**/.ipynb_checkpoints
+**/*.slides.html
+.idea
+pydap_*.tgz
+
+# Documentation
+pydap/doc_sphinx/*
+
+# build
+build/
+dist/
+pydap.egg-info/
+
+# swap files
+**/.*.swp
