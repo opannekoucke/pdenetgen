@@ -27,6 +27,7 @@ Install <a id='install'/>
 
  1. Clone the repository `git clone https://github.com/opannekoucke/pdenetgen.git`
  1. Install the package `make install` (or `python setup.py install`)
+ 1. Examples are given as jupyter notebooks (see ./example/) 
 
 
 Citation <a id='cite'/>
