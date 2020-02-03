@@ -34,8 +34,7 @@ Citation <a id='cite'/>
 -----------------------
 
     @article{Pannekoucke2020A,
-      title={PDE-NetGen 1.0: from symbolic PDE representations of physical
-processes to trainable neural network representations},
+      title={PDE-NetGen 1.0: from symbolic PDE representations of physical processes to trainable neural network representations},
       author={Olivier Pannekoucke and Ronan Fablet},
       journal={arXiv preprint arXiv:},
       year={2020}
