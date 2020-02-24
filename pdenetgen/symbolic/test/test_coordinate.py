@@ -1,5 +1,5 @@
 import unittest
-from pydap.symbolic import CoordinateSystem
+from pdenetgen.symbolic import CoordinateSystem
 from sympy import symbols, Function, Matrix, Derivative
 
 class TestCoordinateSystem(unittest.TestCase):

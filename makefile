@@ -14,6 +14,7 @@ install:
 	#rm -rf ./build/ ./dist/ ./pydap.egg-info
 	python setup.py install
 	
-
+env:
+	#pip freeze > requirements.txt
 clean:
 	rm -rf `find | grep __pycache__`

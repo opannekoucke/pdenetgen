@@ -1,5 +1,5 @@
 from unittest import TestCase
-from pydap.symbolic import Eq
+from pdenetgen.symbolic import Eq
 from sympy import symbols
 
 class TestEq(TestCase):

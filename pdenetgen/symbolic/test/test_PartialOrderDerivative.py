@@ -1,6 +1,6 @@
 import unittest
 from sympy import symbols
-from pydap.symbolic.pkfcas import PartialOrderDerivative
+from pdenetgen.symbolic.pkfcas import PartialOrderDerivative
 
 class MyTestCase(unittest.TestCase):
     coords = symbols('x y')

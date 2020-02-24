@@ -1,6 +1,6 @@
 import unittest
 
-from pydap.symbolic.finite_difference import Code
+from pdenetgen.symbolic.finite_difference import Code
 from sympy import Function, symbols
 
 class TestCode(unittest.TestCase):
