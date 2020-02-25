@@ -23,7 +23,7 @@ scipy==1.4.1
 six==1.14.0
 sympy==1.4
 tensorboard==1.12.2
-tensorflow==1.13.0rc1
+tensorflow==1.15.2
 tensorflow-estimator==1.13.0rc0
 termcolor==1.1.0
 Werkzeug==1.0.0
