@@ -1,0 +1,5 @@
+sympy==1.4
+numpy==1.16.2
+tensorflow==1.13.0rc1
+tensorflow-estimator==1.13.0rc0
+keras==2.2.4

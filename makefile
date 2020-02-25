@@ -1,5 +1,8 @@
 # Defined key that should not be confused with existing local files 
-.PHONY: test verbose doc cleandoc install export
+.PHONY: test verbose doc cleandoc install export init
+
+init:
+	pip install -r requirements.txt
 
 test:
 	python -m unittest discover
