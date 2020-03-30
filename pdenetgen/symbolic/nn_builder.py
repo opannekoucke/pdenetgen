@@ -690,9 +690,7 @@ class DerivativeFactory(object):
         dimension = len(kernel_size)
 
         if periodic:
-            print('Create a periodic boundary')
             def PeriodicDerivative(conv):
-                print('New PDE-NetGen version')
                 periodized = PeriodicFactory(kernel_size)(conv)
                 derivative = DerivativeFactory(kernel_size, kernel, name, periodic=False, nfilter=nfilter)(periodized)
                 cropped = CropFactory(kernel_size)(derivative)
