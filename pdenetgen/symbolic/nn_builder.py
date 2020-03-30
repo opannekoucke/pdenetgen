@@ -666,7 +666,7 @@ class Crop1D(Crop):
 
     def compute_output_shape(self, input_shape):
         output_shape = list(input_shape)
-        output_shape[1] -= 2 * self.suppress_columns
+        output_shape[1] -= 2 * self.suppress_columns[0]
         return tuple(output_shape)
 
 
@@ -708,7 +708,7 @@ class DerivativeFactory(object):
             options['weights'] = [kernel]
             options['trainable'] = False
         else:
-            print('Introduce Option in Conv Net')
+            print(f'Kernel for derivative `{name}` is set ** trainable **')
             #wl2 = 0.001
             #options['kernel_regularizer'] = keras.regularizers.l2(wl2)
             #options['kernel_initializer'] = keras.initializers.RandomNormal(mean=0.0, stddev=0.05, seed=None)
