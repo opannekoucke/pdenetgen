@@ -672,7 +672,15 @@ class Crop1D(Crop):
 
 class DerivativeFactory(object):
 
-    def __new__(cls, kernel_size, kernel=None, name=None, periodic=True, nfilter=1):
+    def __new__(cls, kernel_size,
+                            kernel=None,
+                            name=None,
+                            periodic=True,
+                            nfilter=1,
+                            activation='linear',
+                            use_bias=False,
+                            #boundary_condition='periodic',
+                            **kwargs):
         """
         Create Derivative layer
         :param kernel_size:
@@ -681,38 +689,57 @@ class DerivativeFactory(object):
                         the kernel can be deduced from learning
                     * when provided:
                         the kernel should corresponds to finite difference stencil of the derivative
-        :param name:
-        :param periodic:
-        :param nfilter:
+        :param name: string for name of layer
+        :param periodic: boolean to apply boundary condition
+        :param activation: activation layer used 'linear' or 'relu' or ..
+        :param use_bias: boolean for using (or not) a bias, no bias is used if kernel is specified.
+        :param nfilter: number of output channels
         :return:
         """
 
-        dimension = len(kernel_size)
+        """
+        ..todo::
+          [ ] replace 'periodic' by 'boundary_condition' with options: 'periodic', 'dirichlet', 'neumann',.. 
+        """
 
-        if periodic:
+        # 1. Handle boundary conditions to create appropriate derivative
+        # 1.1 Periodic boundary condition
+        if periodic: #or boundary_condition=='periodic':
             def PeriodicDerivative(conv):
                 periodized = PeriodicFactory(kernel_size)(conv)
-                derivative = DerivativeFactory(kernel_size, kernel, name, periodic=False, nfilter=nfilter)(periodized)
+                derivative = DerivativeFactory(kernel_size,
+                                               kernel = kernel,
+                                               name = name,
+                                               periodic = False,
+                                               nfilter = nfilter,
+                                               activation = activation,
+                                               use_bias = use_bias,
+                                               **kwargs)(periodized)
                 cropped = CropFactory(kernel_size)(derivative)
                 return cropped
 
             return PeriodicDerivative
 
+        # 2. Set kernel considering the boundary condition.
         options = {
-                    'padding':'same',
-                    'activation':'linear',
-                    'use_bias':False,
+                    'padding':'same',  # should depends on boundary condition.. this should be modified later.
+                    'activation':activation,
+                    'use_bias':use_bias,
                     'name':name,
         }
         if kernel is not None:
+            #print('Set kernel information')
             options['weights'] = [kernel]
             options['trainable'] = False
+            options['use_bias'] = False # no bias is used if kernel is specified
         else:
-            print(f'Kernel for derivative `{name}` is set ** trainable **')
+            #print('Kernels in derivative are unknown and set to trainable')
+            pass
             #wl2 = 0.001
             #options['kernel_regularizer'] = keras.regularizers.l2(wl2)
             #options['kernel_initializer'] = keras.initializers.RandomNormal(mean=0.0, stddev=0.05, seed=None)
 
+        dimension = len(kernel_size)
         if dimension == 1:
             return keras.layers.Conv1D(nfilter, kernel_size, **options)
 
