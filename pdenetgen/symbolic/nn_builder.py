@@ -679,6 +679,10 @@ class DerivativeFactory(object):
                             nfilter=1,
                             activation='linear',
                             use_bias=False,
+                            wl2 = 0.001,
+                            mean = 0.0,
+                            stddev = 0.05,
+                            seed = None,
                             #boundary_condition='periodic',
                             **kwargs):
         """
@@ -714,6 +718,10 @@ class DerivativeFactory(object):
                                                nfilter = nfilter,
                                                activation = activation,
                                                use_bias = use_bias,
+                                               wl2 = wl2,
+                                               mean = mean,
+                                               stddev = stddev,
+                                               seed = seed,
                                                **kwargs)(periodized)
                 cropped = CropFactory(kernel_size)(derivative)
                 return cropped
@@ -734,10 +742,9 @@ class DerivativeFactory(object):
             options['use_bias'] = False # no bias is used if kernel is specified
         else:
             #print('Kernels in derivative are unknown and set to trainable')
-            pass
-            #wl2 = 0.001
-            #options['kernel_regularizer'] = keras.regularizers.l2(wl2)
-            #options['kernel_initializer'] = keras.initializers.RandomNormal(mean=0.0, stddev=0.05, seed=None)
+            print(f'randomized kernel with l2 regularization (wl2: {wl2}, mean: {mean}, stddev: {stddev} )')
+            options['kernel_regularizer'] = keras.regularizers.l2(wl2)
+            options['kernel_initializer'] = keras.initializers.RandomNormal(mean=mean, stddev=stddev, seed=seed)
 
         dimension = len(kernel_size)
         if dimension == 1:
