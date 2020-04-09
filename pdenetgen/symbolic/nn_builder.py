@@ -706,6 +706,10 @@ class DerivativeFactory(object):
           [ ] replace 'periodic' by 'boundary_condition' with options: 'periodic', 'dirichlet', 'neumann',.. 
         """
 
+        # 1. Disable periodic boundary if support of kernel_size is 1 as in (1,1,1) 
+        if np.prod(kernel_size)==1:
+            periodic = False
+
         # 1. Handle boundary conditions to create appropriate derivative
         # 1.1 Periodic boundary condition
         if periodic: #or boundary_condition=='periodic':
@@ -743,7 +747,8 @@ class DerivativeFactory(object):
         else:
             #print('Kernels in derivative are unknown and set to trainable')
             print(f'randomized kernel with l2 regularization (wl2: {wl2}, mean: {mean}, stddev: {stddev} )')
-            options['kernel_regularizer'] = keras.regularizers.l2(wl2)
+            if wl2 is not None:
+                options['kernel_regularizer'] = keras.regularizers.l2(wl2)
             options['kernel_initializer'] = keras.initializers.RandomNormal(mean=mean, stddev=stddev, seed=seed)
 
         dimension = len(kernel_size)
