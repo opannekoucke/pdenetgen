@@ -15,3 +15,5 @@ pydap.egg-info/
 
 # swap files
 **/.*.swp
+
+example/pkf-dataset.npy

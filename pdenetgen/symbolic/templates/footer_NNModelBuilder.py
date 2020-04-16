@@ -84,7 +84,7 @@ template = '''
             ]     
         
         model = keras.models.Model(inputs=inputs, outputs=outputs)
-        model.trainable = False
+        #model.trainable = False
         self._trend_model = model
         
     def trend(self, t, state):
