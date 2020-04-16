@@ -5,12 +5,37 @@
 from sympy import Derivative, Function, Symbol, symbols, Add
 from .tool import clean_latex_name
 import sympy
+import numpy as np
 
 
-__all__ = ['Eq','PDESystem','CoordinateSystem']
+class ScalarSymbol(Symbol):
+    """
+    Model a scalar value in a dynamics
+    """
+    pass
 
-class ScalarSymbol(Symbol): pass
+class TrainableScalar(Symbol):
+    """
+    Trainable Scalar for data-driven and physic-informed dynamics
+    """
+
+    def __new__(cls, name, init_value=0, use_bias=False, **assumptions):
+        instance = super(TrainableScalar, cls).__new__(cls, name, **assumptions)
+        instance.init_value = init_value
+        instance.use_bias = use_bias
+        return instance
+
+
 class FunctionSymbol(Symbol): pass
+
+
+def upper_triangle(matrix):
+    """ Returns the upper triangle of a matrix """
+    upper = []
+    for i in range(matrix.shape[0]):
+        for j in range(i, matrix.shape[1]):
+            upper.append(matrix[i, j])
+    return upper
 
 class Matrix(sympy.Matrix):
 
@@ -134,13 +159,17 @@ class PDESystem(object):
         self.spatial_coordinates = self._get_spatial_coordinates()
         self.time_coordinate = self.coordinates[0]
 
+        # Set trainable scalar
+        self.trainable_scalars = self._get_trainable_scalars()
+
         # Set constants
         self.constants = self._get_constants()
 
         # Set derivatives which appears in the system of pde
         self.spatial_derivatives = self._get_spatial_derivatives()
 
-        self.derivative_max_order = max([derivative.derivative_count for derivative in self.spatial_derivatives])
+
+        self.derivative_max_order = max([0]+[derivative.derivative_count for derivative in self.spatial_derivatives])
 
     def __iter__(self):
         """ Build an iterator on the system equations """
@@ -157,6 +186,9 @@ class PDESystem(object):
 
     def __repr__(self):
         """ Sumup of the PDESystem """
+        """
+        todo : add trainable_scalar
+        """
         name = f"'{self.name}'" if self.name != '' else ''
         prognostic_functions = ", ".join([str(function)
                                           for function in self.prognostic_functions])
@@ -165,6 +197,7 @@ class PDESystem(object):
         constant_functions = ", ".join([str(function)
                                         for function in self.constant_functions])
         constants = ", ".join([str(clean_latex_name(constant)) for constant in self.constants])
+        trainable_scalars = ",".join([str(clean_latex_name(constant)) for constant in self.trainable_scalars])
 
         string = f'''PDE System {name}:
         prognostic functions : {prognostic_functions}
@@ -172,6 +205,11 @@ class PDESystem(object):
         exogeneous functions : {exogenous_functions}
         constants            : {constants}
         '''
+        if self.trainable_scalars != set():
+            string += f'''
+        trainable scalars    : {trainable_scalars}
+            '''
+
         return string
 
     def _get_functions(self):
@@ -242,9 +280,21 @@ class PDESystem(object):
         constants = set()  # use set to only select one single sample of a given constant (no duplication)
         for equation in self.equations:
             rhs = equation.args[1]
-            constants.update(rhs.atoms(Symbol).difference(self.coordinates))
+            trainable = rhs.atoms(TrainableScalar)
+            # Only retain constants that are not coordinate nor trainable
+            constants.update(rhs.atoms(Symbol).difference(self.coordinates).difference(trainable))
 
         return constants
+
+    def _get_trainable_scalars(self):
+        ''' List all Constant from a system of PDE '''
+
+        trainable_scalars = set()  # use set to only select one single sample of a given constant (no duplication)
+        for equation in self.equations:
+            rhs = equation.args[1]
+            trainable_scalars.update(rhs.atoms(TrainableScalar))
+
+        return trainable_scalars
 
     def _get_spatial_derivatives(self):
         ''' List all Derivative from a system of PDE '''
@@ -292,7 +342,7 @@ def remove_eval_derivative(expr):
         eval_derivative[eval_term] = eval_term.args[0].subs({
             key: value for key, value in zip(eval_term.args[1], eval_term.args[2])
         })
-    return expr.subs(eval_derivative)
+    return expr.subs(eval_derivative).doit()
 
 
 def get_coordinates(function):
@@ -424,3 +474,47 @@ class CoordinateSystem(object):
                 raise ValueError(f'field args {function.args} not compatible with coordinates {self._coords}')
 
 
+class CompareEquation(object):
+    """ Compare two symbolic equations, with a comparison of their lhs/rhs """
+
+    def __init__(self, eq1, eq2):
+        self.equations = [eq1, eq2]
+        self.lhs = CompareExpression(*[eq.args[0] for eq in self.equations])
+        self.rhs = CompareExpression(*[eq.args[1] for eq in self.equations])
+
+
+class CompareExpression(object):
+    """ Compare two symbolic expression to understand:
+        - what they have in common,
+        - what are their differences
+    """
+
+    def __init__(self, exp1, exp2):
+        self.expressions = [exp1.expand(), exp2.expand()]
+        self._sets = None
+
+    @property
+    def sets(self):
+        """ Return the set of sub terms from expansion """
+        if self._sets is None:
+            sets = []
+            for exp in self.expressions:
+                if isinstance(exp, Add):
+                    sets.append(set(exp.args))
+                else:
+                    sets.append(set([exp]))
+
+            self._sets = sets
+
+        return self._sets
+
+    @property
+    def common(self):
+        """ Return terms in common """
+        s1, s2 = self.sets
+        return s1.intersection(s2)
+
+    @property
+    def specific(self):
+        """ Return terms wich are specific to each expressions """
+        return [s.difference(self.common) for s in self.sets]

@@ -1,17 +1,22 @@
 from sympy import Mul, Add, Rational, Float, Integer, Pow, Function
-from .util import ScalarSymbol, FunctionSymbol
+from .util import ScalarSymbol, FunctionSymbol, TrainableScalar
 import keras
 import tensorflow as tf
 import numpy as np
 
 class MetaLayer(object):
+    """
+    Token layer
 
-    def __init__(self,type_key=None, name=None,input_key=None,output_key=None,options=None):
-        self.type_key = type_key
-        self.name = name
-        self.input_key = input_key
-        self.output_key = output_key
-        self.options = options
+
+
+    """
+    def __init__(self,type_key=None, name=None,input_key=None,output_key=None, options=None):
+        self.type_key = type_key # Type of layer: Add, Mul, Pow, Derivative, ..
+        self.name = name # Name of the layer
+        self.input_key = input_key # Input arguments
+        self.output_key = output_key # Output arguments
+        self.options = options # Option of the layer
 
     @staticmethod
     def from_layer(layer):
@@ -22,17 +27,41 @@ class MetaLayer(object):
                   options=layer.options)
         return
 
-class Layer(object):
-    """ Build a layer from the recursive exploration of the sub-expression """
 
-    _id = 0
+class Counter(object):
+    """ Handle the number of instance of a class """
+
+    _cls_id = 0
+
+    def __new__(cls, *args, **kwargs):
+        instance = super(Counter, cls).__new__(cls)
+        # Handle the counter
+        instance._id = instance._cls_id
+        instance._update_cls_id()
+        return instance
+
+    @classmethod
+    def _update_cls_id(cls):
+        cls._cls_id += 1
+
+class Layer(Counter):
+    """ Build a layer from the recursive exploration of the sub-expression
+
+    Description
+    -----------
+
+    For any type of layer, this handle the iteration of layer used. For instance,
+    when a layer is called its name is tag by an integer _id which is incremented
+    after the call.
+
+    """
+
     _name = None
     _output_key = None
 
     def __init__(self, expr):
+        # Init layer properties
         self.expr = expr
-        self.number = self._id
-        self._update_id()
         self._skeleton = []
         self._input_key = []
         self._options = None
@@ -98,9 +127,6 @@ class Layer(object):
 
         return self.output_key, self._skeleton
 
-    @classmethod
-    def _update_id(cls):
-        cls._id += 1
 
     def _add_to_skeleton(self, skeleton):
         if skeleton is not None:
@@ -337,6 +363,52 @@ class ScalarLayer(Layer):
 
         return output_key, skeleton
 
+
+class TrainableScalarLayer(Layer): # TrainableScalarMulLayer ?
+    """
+    Add a trainable scalar
+    """
+    _output_key = 'train_scalar'
+
+    def __init__(self, train_scalar, expr):
+        super().__init__(expr)
+        # Get options from train_scalar: If it is iterable: get the first, but consider all the labels
+        # for instance if the product 'a*b' of trainable scalar 'a' and 'b' is encountered, the
+        # this will produce a single layer with options of 'a' and label: 'a, b'
+        if hasattr(train_scalar,'__iter__'):
+            self.train_scalar = train_scalar[0]
+            self.label = ', '.join([str(term) for term in train_scalar])
+        else:
+            self.train_scalar = train_scalar
+            self.label = str(train_scalar)
+
+    def __call__(self):
+        """ Construct the skeleton of a symbolic expression """
+
+        """ 
+        Code description:
+
+           1) Feed self._skeleton and self._input_key from sub-expressions
+           2) Extract option when needed (Derivative,.. )
+           3) Feed self._skeleton with the present layer
+        """
+        # 1) Feed from sub-expressions: this modifies self._skeleton & self._input_key
+        output_key, skeleton = LayerFactory(self.expr)()
+        self.add_input_key(output_key)
+        self._add_to_skeleton(skeleton)
+
+        # 3) Add layer to skeleton
+        meta_layer = self.as_MetaLayer
+        meta_layer.options = {
+            'init_value':self.train_scalar.init_value,
+            'use_bias':self.train_scalar.use_bias,
+            'label':self.label,
+        }
+        self._add_to_skeleton(meta_layer)
+
+        return self.output_key, self._skeleton
+    pass
+
 class FunctionLayer(Layer):
 
     def __call__(self):
@@ -345,13 +417,15 @@ class FunctionLayer(Layer):
 
         return output_key, skeleton
 
+
 class LayerFactory(object):
+    """ Translate a sympy expression into layers """
 
     def __new__(cls, expr):
 
         if isinstance(expr, Add):
             # Decompose the addition in sclar/vector addition
-            # ---> use 'wild' for pattern research.
+            # ---> use 'wild' for pattern research ? : not possible
 
             # 1) check for decomposition (scalar + vector)
             scalar = 0
@@ -359,7 +433,6 @@ class LayerFactory(object):
             for arg in expr.args:
                 if is_scalar(arg):
                     scalar += arg
-
                 else:
                     other += arg
 
@@ -378,37 +451,40 @@ class LayerFactory(object):
 
         elif isinstance(expr, Mul):
             # Decompose the multiplication in sclar/vector multiplication
-            # ---> use 'wild' for pattern research.
+            # ---> use 'wild' for pattern research ? : not possible
 
-            # 1) check for decomposition (scalar + vector)
-
-            # 2) Applies 'Mul' for vector part and 'ScalarMul' for addition with scalar.
-            #   Three cases :
-            #    i. saclar * scalar
-            #            -> this situation should not appear if expressions are only with Float
-            #   ii. scalar * vector
-            #  iii. vector * vector
-            # 1) check for decomposition (scalar + vector)
+            # 1) check for decomposition (scalar * vector)
             scalar = 1
+            trainable = False
+            trainable_scalar = None
             other = []
             for arg in expr.args:
                 if is_scalar(arg):
                     scalar *= arg
+                elif isinstance(arg, TrainableScalar):
+                    trainable = True
+                    # retains only one trainable scalar (trainable scalars are absorbing: a*b => c not, (a,b) are
+                    # not retained
+                    trainable_scalar = arg if trainable_scalar is None else list(trainable_scalar)+[arg]
                 else:
                     other.append(arg)
             other = Mul(*other)
 
-            # 2) Applies 'Add' for vector part and 'ScalarAdd' for addition with scalar.
+            # 2) Applies 'Mul' for vector part and 'ScalarMul' for multiplication with a scalar.
             #   Three cases :
-            #    i. saclar + scalar
+            #    i. saclar * scalar
             #            -> this situation should not appear if expressions are only with Float
-            #   ii. scalar + vector
-            #  iii. vector + vector
-            if scalar == 1:
-                # iii. No addition with scalar
+            #   ii. trainable * vector
+            #  iii. scalar * vector
+            #   iv. vector * vector
+            if trainable:
+                #  ii. trainable * vector
+                return TrainableScalarLayer(trainable_scalar, other)
+            elif scalar == 1:
+                # iv. vector*vector i.e. No multiplication with scalar
                 return MulLayer(expr)
             else:
-                # ii. Addition with scalar
+                # iii. Multiplication with scalar
                 return ScalarMulLayer(scalar, other)
 
         elif isinstance(expr, Pow):
@@ -437,6 +513,9 @@ class LayerFactory(object):
         elif isinstance(expr, (Float, Integer, Rational, ScalarSymbol)):
             return ScalarLayer(expr)
 
+        elif isinstance(expr, TrainableScalar):
+            return TrainableScalarLayer(expr)
+
         else:
             raise NotImplementedError
 
@@ -462,6 +541,9 @@ class CodeSkeleton(object):
 
 
 class KerasCodingRule(object):
+    """
+    Translate MetaLayer into Keras code.
+    """
     translate_to_keras = {
         'AddLayer': 'keras.layers.add',
         'MulLayer': 'keras.layers.multiply',
@@ -470,7 +552,8 @@ class KerasCodingRule(object):
         'ScalarPowLayer': 'keras.layers.Lambda',
         'ScalarAddLayer': 'keras.layers.Lambda',
         'ScalarMulLayer': 'keras.layers.Lambda',
-        'DerivativeLayer': 'keras.layers.Conv{{dimension}}D',
+        'DerivativeLayer': None, #'keras.layers.Conv{{dimension}}D',
+        'TrainableScalarLayer': None, #'keras.layers.Conv{{dimension}}D',
     }
 
     def __init__(self, skeleton):
@@ -516,6 +599,20 @@ class KerasCodingRule(object):
                     kernel_size = meta_layer.options['size']
                     #new_lines = f"{output_key} = {function.replace('{{dimension}}',str(dimension))}(1,{kernel_size},weights=[{kernel_keyvar}],trainable=False,padding='same',activation='linear',use_bias=False,name='{name}')({input_key})"
                     new_lines = f"{output_key} = DerivativeFactory({kernel_size},kernel={kernel_keyvar},name='{name}')({input_key})"
+                elif type_key == 'TrainableScalarLayer':
+                    input_key=input_key[0]
+                    init_value = meta_layer.options['init_value']
+                    use_bias = meta_layer.options['use_bias']
+                    label = meta_layer.options['label']
+                    # Set the initial value at code level:
+                    init_value_options = f"init_value={init_value}"
+                    if init_value is None:
+                        # When None, then a normal random sample is generated from the mean, stddev arguments
+                        init_value_options += ", mean=0., stddev=1., seed=None"
+
+                    new_lines = f"""{output_key} = TrainableScalarLayerFactory(input_shape={input_key}.shape, name='{name}', 
+                        use_bias={use_bias}, {init_value_options}, wl2=None)({input_key})
+                        #TrainableScalar name: '{label}' """
                 else:
                     raise NotImplementedError
 
@@ -524,6 +621,71 @@ class KerasCodingRule(object):
             self._code = code
 
         return self._code
+
+class TrainableScalarLayerFactory(object):
+    """
+    Build a trainable scalar layer
+
+    Description
+    -----------
+
+    The implementation of trainable scalar layer relies on convolutional neural network.
+    A trainable scalar layer corresponds to the layer $a f(t,x)$ where $a$ is unknown and $f(t,x)$ is a field.
+    in this case, a Conv1D is used (t being a temporal coordinate):
+
+    $a f(t,x)$  becomes a Conv1D layer **without bias** where with a kernel size of $1$.
+
+    Generate a trainable scalar layer depending on the input shape to switch between Conv1D, Conv2D and Conv3D
+    """
+
+    def __new__(cls, input_shape, init_value=None, name=None, use_bias=False,
+                            mean=0., stddev=1., wl2=None, seed=None,
+                            **kwargs):
+        """
+
+        :param input_shape: shape of the input of the layer.
+        :param init_value: it is possible to set the value of the scalar to train.
+        :param name:
+        :param use_bias: No bias should be used
+        :param mean: mean of the random normal law sample (0. is often used)
+        :param stddev: std dev of the random normal law sample (0.05 is often used)
+        :param seed:   seed of the random sample (None means the seed is ?)
+        :param wl2:   regularizaiton (0.001 isoften used)
+        :param kwargs:
+        """
+        # 1. Set the dimension from input_shape information
+        dimension = len(input_shape[1:-1])
+
+        # 2. Set kernel considering the boundary condition.
+        options = {
+                    'padding':'same',
+                    'activation':'linear',
+                    'use_bias':use_bias,
+                    'name':name,
+                    'trainable': True,
+        }
+
+        if wl2 is not None:
+            options['kernel_regularizer'] = keras.regularizers.l2(wl2)
+        if init_value is None:
+            options['kernel_initializer'] = keras.initializers.RandomNormal(mean=mean, stddev=stddev, seed=seed)
+        else:
+            options['weights'] = [np.array(init_value).reshape(dimension*(1,)+(1,1))]
+
+        kernel_size = dimension*(1,)
+        nfilter = 1
+
+        if dimension == 1:
+            return keras.layers.Conv1D(nfilter, kernel_size, **options)
+
+        elif dimension == 2:
+            return keras.layers.Conv2D(nfilter, kernel_size, **options)
+
+        elif dimension == 3:
+            return keras.layers.Conv3D(nfilter, kernel_size, **options)
+
+        else:
+            raise NotImplementedError
 
 
 class PeriodicFactory(object):
