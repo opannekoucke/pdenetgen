@@ -1,8 +1,10 @@
 from sympy import Mul, Add, Rational, Float, Integer, Pow, Function
 from .util import ScalarSymbol, FunctionSymbol, TrainableScalar
+from .tool import clean_latex_name
 import keras
 import tensorflow as tf
 import numpy as np
+
 
 class MetaLayer(object):
     """
@@ -340,6 +342,7 @@ def is_scalar(expr):
     else:
         return False
 
+
 class ScalarLayer(Layer):
 
     def __call__(self):
@@ -369,7 +372,8 @@ class TrainableScalarLayer(Layer): # TrainableScalarMulLayer ?
     Add a trainable scalar
     """
     _output_key = 'train_scalar'
-
+    _name = 'TrainableScalar'
+    
     def __init__(self, train_scalar, expr):
         super().__init__(expr)
         # Get options from train_scalar: If it is iterable: get the first, but consider all the labels
@@ -380,7 +384,17 @@ class TrainableScalarLayer(Layer): # TrainableScalarMulLayer ?
             self.label = ', '.join([str(term) for term in train_scalar])
         else:
             self.train_scalar = train_scalar
-            self.label = str(train_scalar)
+            self.label = clean_latex_name(str(train_scalar))
+
+    @property
+    def name(self):
+        if self._name is None:
+            name = type(self).__name__
+        else:
+            name = self._name
+        #return f"{name}_{self._id}"
+        label = self.label.replace(',','_')
+        return f"{name}_{label}"
 
     def __call__(self):
         """ Construct the skeleton of a symbolic expression """
@@ -399,11 +413,21 @@ class TrainableScalarLayer(Layer): # TrainableScalarMulLayer ?
 
         # 3) Add layer to skeleton
         meta_layer = self.as_MetaLayer
+
+        """
         meta_layer.options = {
             'init_value':self.train_scalar.init_value,
             'use_bias':self.train_scalar.use_bias,
             'label':self.label,
         }
+        """
+        # Add all options of train_scalar
+        meta_layer.options = {option:getattr(self.train_scalar,option)
+                                                    for option in TrainableScalar.options
+        }
+        # Add label
+        meta_layer.options['label'] = self.label
+
         self._add_to_skeleton(meta_layer)
 
         return self.output_key, self._skeleton
@@ -601,17 +625,15 @@ class KerasCodingRule(object):
                     new_lines = f"{output_key} = DerivativeFactory({kernel_size},kernel={kernel_keyvar},name='{name}')({input_key})"
                 elif type_key == 'TrainableScalarLayer':
                     input_key=input_key[0]
-                    init_value = meta_layer.options['init_value']
-                    use_bias = meta_layer.options['use_bias']
                     label = meta_layer.options['label']
-                    # Set the initial value at code level:
-                    init_value_options = f"init_value={init_value}"
-                    if init_value is None:
-                        # When None, then a normal random sample is generated from the mean, stddev arguments
-                        init_value_options += ", mean=0., stddev=1., seed=None"
+                    # Set init_options options
+                    # 1. Set all options
+                    init_value_options = [f"{option}={meta_layer.options[option]}" for option in TrainableScalar.options]
+                    # 2. Convert init value options into string to insert in code line
+                    init_value_options = ','.join(init_value_options)
 
                     new_lines = f"""{output_key} = TrainableScalarLayerFactory(input_shape={input_key}.shape, name='{name}', 
-                        use_bias={use_bias}, {init_value_options}, wl2=None)({input_key})
+                        {init_value_options})({input_key})
                         #TrainableScalar name: '{label}' """
                 else:
                     raise NotImplementedError
