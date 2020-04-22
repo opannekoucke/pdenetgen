@@ -1,13 +1,116 @@
 from .util import Eq, get_coordinates
+import warnings
+
+def get_subs_derivative(derivative):
+    """
+    Compute the finite difference of a derivative on a regular grid at the second order of consistancy.
+    
+    Can compute the derivative of u(t,x,y+dy) in x 
+    but not the derivative of u(t,x+dx,y+dy) !!!!
+    
+    Description
+    -----------
+    
+    consistancy at second order means:    
+    finite_difference_version - derivative = O(||dx||^2)
+    """
+    
+    """
+    Code explaination
+    -----------------
+    
+    We illustrate the code on the following example:
+        Derivative(u,(x,2),(y,1))
+        
+    The derivative is replaced by 
+        Derivative( Derivative(u,(x,2)) , (y,1))
+    
+    Then, the computation follows the steps:
+    1. the finite difference approximation replaces the internal derivative, Derivative(u,(x,2)),
+        by its finite difference approximation. 
+        
+        finite_diff = Finite_Diff_of_(Derivative(u,x,2))
+        
+    2. then the approximation is 
+    
+        subs_derivative = Derivative(finite_diff, y,1)
+
+    """
+    from sympy import Derivative, Integer, symbols
+    from numpy import arange
+
+    # Get arguments from the derivative
+    func_part = derivative.args[0]
+    xi, oi = derivative.args[1]
+    dxi = symbols('d' + str(xi))    
+    
+    # 1. Compute the finite difference of the derivation with respect to the first argument
+    
+    # 1.1 set points of the regular grid where the computation should be made.    
+    # These points are selected to ensure a **second order consistency** of the finite difference approximation
+    # --> modify the points to increase the consistency. 
+    if oi%2==1:        
+        points = [xi+Integer(k)*dxi for k in arange(-oi,oi+1) if k%2==1]                    
+    else:
+        #
+        # For even derivative, this is equivalent to :
+        #   derivative.as_finite_difference(dxi, wrt=xi)
+        #
+        points = [xi+Integer(k)*dxi for k in arange(-oi//2,oi//+1)]
+
+    # 1.2 Substitution of the selected part of the derivative: Derivative(.. , xi,oi)
+    subs_derivative = Derivative(func_part,xi,oi).as_finite_difference(points)
+
+    # 2. Computation of the remaining partial differential (if needed)
+    if len(derivative.args)>2:
+        subs_derivative = Derivative(subs_derivative,*derivative.args[2:]).doit().expand()        
+
+    return subs_derivative
 
 
-def finite_difference(expr, regular_grid=True):
-    """ Finite differenciate derivative in an expression
+def finite_difference(expr):
+    """ Finite differenciate derivative of an expression on a regular grid
 
     Documentation
     -------------
 
         from sympy, see: Fornberg1988MC
+
+    Example:
+        >>> sympy_finite_difference(Derivative(f(x),x))
+        f(x+dx)/2*dx - f(x-dx)/2*dx
+    """
+    # todo: eliminate the option `regular_grid` -- the computation is now always on a regular grid !!!!
+    from sympy import Derivative
+
+    print("Call to the new finite_difference function ")
+    expr = expr.doit()
+
+    while True:
+        # -1- Find all derivatives in the expression
+        derivatives = expr.atoms(Derivative)
+        if derivatives == set():
+            # if no derivative then exit loop !
+            break
+        # -2- Replace all derivatives found above
+        for derivative in derivatives:
+            subs_derivative = get_subs_derivative(derivative)
+            expr = expr.subs(derivative, subs_derivative).expand()
+
+    return expr
+
+
+def _sympy_finite_difference(expr):
+    """ Compute the finite difference of an expression using the raw second order approximation of sympy.
+
+    Documentation
+    -------------
+
+        from sympy, see: Fornberg1988MC
+
+    Example:
+        >>> sympy_finite_difference(Derivative(f(x),x))
+        f(x+dx)/2*dx - f(x-dx)/2*dx
 
     """
     from sympy import Derivative, symbols
@@ -27,9 +130,6 @@ def finite_difference(expr, regular_grid=True):
             dxi = symbols('d' + str(xi))
             # b) substitute
             expr = expr.subs(derivative, derivative.as_finite_difference(dxi, wrt=xi)).expand()
-
-    if regular_grid:
-        expr = regularize_finite_difference(expr)
 
     return expr
 
@@ -92,6 +192,8 @@ def regularize_finite_difference(finite):
 
     from sympy import Rational, fraction, Integer, Function
 
+    warnings.warn("regularize_finite_difference should be removed in future", DeprecationWarning)
+
     for function in finite.atoms(Function):
 
         # -1- Find coordinate system `x` adapted to the function
@@ -122,6 +224,7 @@ def regularize_finite_difference(finite):
 
 def regularize_finite_difference_system(system):
     """ Transform a finite difference system into a regularized system """
+    warnings.warn("regularize_finite_difference_system should be removed in future", DeprecationWarning)
     regular = []
     for eq in system:
         lhs, rhs = eq.args
