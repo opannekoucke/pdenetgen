@@ -83,7 +83,6 @@ def finite_difference(expr):
     # todo: eliminate the option `regular_grid` -- the computation is now always on a regular grid !!!!
     from sympy import Derivative
 
-    print("Call to the new finite_difference function ")
     expr = expr.doit()
 
     while True:
