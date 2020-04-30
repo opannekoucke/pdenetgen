@@ -109,7 +109,7 @@ class Kernel(object):
 
         """
         # 1. Compute the finite difference **in regular grid**
-        finite = finite_difference(self._derivative, regular_grid=True)
+        finite = finite_difference(self._derivative)
 
         # 2. Extract function
         functions = list(finite.atoms(Function))
