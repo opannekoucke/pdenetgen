@@ -56,7 +56,7 @@ def get_subs_derivative(derivative):
         # For even derivative, this is equivalent to :
         #   derivative.as_finite_difference(dxi, wrt=xi)
         #
-        points = [xi+Integer(k)*dxi for k in arange(-oi//2,oi//+1)]
+        points = [xi+Integer(k)*dxi for k in arange(-oi//2,oi//2+1)]
 
     # 1.2 Substitution of the selected part of the derivative: Derivative(.. , xi,oi)
     subs_derivative = Derivative(func_part,xi,oi).as_finite_difference(points)
