@@ -436,6 +436,17 @@ def get_derivative_partial_orders(derivative):
 
     return partial_orders
 
+def get_total_order(derivative):
+    """ Compute the total order of a derivative
+
+    Example:
+        >>> from sympy import Derivative, Function, symbols
+        >>> x,y = symbols('x y')
+        >>> get_total_order(Derivative( Function('u')(x,y), x,2,y,4))
+        6
+    """
+    partial_orders = get_derivative_partial_orders(derivative)
+    return sum([value for key,value in partial_orders.items()])
 
 class CoordinateSystem(object):
     """ Facilitate handling of coordinate system """
