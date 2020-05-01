@@ -1,4 +1,4 @@
-from .util import Eq, get_coordinates
+from .util import Eq, get_coordinates, get_total_order
 import warnings
 
 def get_subs_derivative(derivative):
@@ -67,9 +67,8 @@ def get_subs_derivative(derivative):
 
     return subs_derivative
 
-
-def finite_difference(expr):
-    """ Finite differenciate derivative of an expression on a regular grid
+def finite_difference_derivative(derivative):
+    """ Finite differenciate a single derivative
 
     Documentation
     -------------
@@ -77,13 +76,13 @@ def finite_difference(expr):
         from sympy, see: Fornberg1988MC
 
     Example:
-        >>> sympy_finite_difference(Derivative(f(x),x))
+        >>> finite_difference(Derivative(f(x),x))
         f(x+dx)/2*dx - f(x-dx)/2*dx
     """
     # todo: eliminate the option `regular_grid` -- the computation is now always on a regular grid !!!!
     from sympy import Derivative
 
-    expr = expr.doit()
+    expr = derivative.doit()
 
     while True:
         # -1- Find all derivatives in the expression
@@ -98,6 +97,60 @@ def finite_difference(expr):
 
     return expr
 
+def finite_difference(expr):
+    """ Finite differenciate derivative of an expression on **a regular grid**
+
+    Documentation
+    -------------
+
+        from sympy, see: Fornberg1988MC
+
+        Note that the default sympy computation of finite-difference approximation implies intermediate points
+        that are not on the regular grid e.g. the finite difference of Derivative(u,x,3) implies point as x+3dx/2,
+        which are not on the grid.
+
+    Example
+    -------
+
+        >>> finite_difference(Derivative(f(x),x))
+        f(x+dx)/2*dx - f(x-dx)/2*dx
+    """
+    # todo: eliminate the option `regular_grid` -- the computation is now always on a regular grid !!!!
+    from sympy import Derivative
+
+    expr = expr.doit()
+
+    # -1- Find all derivatives in the expression
+    derivatives = expr.atoms(Derivative)
+
+    # -2- Ordering of the derivative by total orders
+    derivatives_of_order = {}
+    for derivative in derivatives:
+        # i. Compute the order
+        total_order = get_total_order(derivative)
+
+        # ii. Set the dic for new order
+        if total_order not in derivatives_of_order:
+            derivatives_of_order[total_order] = []
+
+            # iii. Add the derivative at the appropriate order
+        derivatives_of_order[total_order].append(derivative)
+
+    # -3- Substitute derivative by decreasing orders
+    #     e.g. $\partial_x^2 u$ is replaced before $\partial_x u$ so that the finite diff. of $\partial_x u$ is not
+    #     substitute in $\partial_x^2 u$
+
+    # 3.1 Compute the decrease ordering of derivatives
+    decreasing_orders = list(derivatives_of_order.keys())
+    decreasing_orders.sort(reverse=True)
+
+    # 3.2 Replace derivative by decreasing orders
+    for order in decreasing_orders:
+        for derivative in derivatives_of_order[order]:
+            subs_derivative = finite_difference_derivative(derivative)
+            expr = expr.subs(derivative, subs_derivative).expand()
+
+    return expr
 
 def _sympy_finite_difference(expr):
     """ Compute the finite difference of an expression using the raw second order approximation of sympy.
@@ -133,7 +186,7 @@ def _sympy_finite_difference(expr):
     return expr
 
 
-def finite_difference_system(system_pde, regular_grid=True):
+def finite_difference_system(system_pde):
         """ Compute the finite difference discretization of a system of pdf which represent evolution equation
 
          Comment
@@ -152,9 +205,6 @@ def finite_difference_system(system_pde, regular_grid=True):
             rhs = finite_difference(rhs)
             # -3- update the system
             fd_system.append(Eq(lhs, rhs))
-
-        if regular_grid:
-            fd_system = regularize_finite_difference_system(fd_system)
 
         return fd_system
 
