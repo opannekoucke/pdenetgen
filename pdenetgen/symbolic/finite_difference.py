@@ -1,4 +1,4 @@
-from .util import Eq, get_coordinates, get_total_order
+from .util import Eq, get_function_coordinates, get_total_order
 import warnings
 
 def get_subs_derivative(derivative):
@@ -224,7 +224,7 @@ def get_displacement(function, dx=None):
         (0,1,-3/2)
     """
     if dx is None:
-        x, dx = get_coordinates(function)
+        x, dx = get_function_coordinates(function)
 
     return tuple(arg.coeff(dxi) for arg, dxi in zip(function.args, dx))
 
@@ -246,7 +246,7 @@ def regularize_finite_difference(finite):
     for function in finite.atoms(Function):
 
         # -1- Find coordinate system `x` adapted to the function
-        x, dx = get_coordinates(function)
+        x, dx = get_function_coordinates(function)
 
         # -2- Find decomposition of the infinitesimal displacement in the `dx` base
         displacement = get_displacement(function, dx)
@@ -299,7 +299,7 @@ def code_regular_function(function, slice_coding_rule):
     from .tool import clean_latex_name
 
     # -1- get information about the function
-    x, dx = get_coordinates(function)
+    x, dx = get_function_coordinates(function)
     displacement = get_displacement(function)
 
     # -2- code function name
@@ -359,7 +359,7 @@ def code_finite_difference(finite, slice_coding_rule, dx_coding_rule):
 
     # -1- Replace functions
     for function in finite.atoms(Function):
-        x, dx = get_coordinates(function)
+        x, dx = get_function_coordinates(function)
         for xi,dxi in zip(x,dx):
             if (xi,dxi) not in loc_x_dx:
                 loc_x_dx.append((xi,dxi))
@@ -420,7 +420,7 @@ class Code(object):
         from .tool import clean_latex_name
 
         # -1- get information about the function
-        x, dx = get_coordinates(function)
+        x, dx = get_function_coordinates(function)
         displacement = get_displacement(function)
 
         # -2- code function name

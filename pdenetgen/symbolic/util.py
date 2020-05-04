@@ -5,7 +5,8 @@
 from sympy import Derivative, Function, Symbol, symbols, Add
 from .tool import clean_latex_name
 import sympy
-import numpy as np
+
+omega = Symbol('omega')
 
 
 class ScalarSymbol(Symbol):
@@ -351,7 +352,7 @@ def remove_eval_derivative(expr):
     return expr.subs(eval_derivative).doit()
 
 
-def get_coordinates(function):
+def get_function_coordinates(function):
     """ Given a function evaluated from finite difference: return the coordinate system and its differential forms
 
     Example
@@ -362,11 +363,14 @@ def get_coordinates(function):
         >>> U = Function('U')(t,x,y)
         >>> U.subs({x:x+dx, y:y-3dy/2})
         U(t,x+dx,y-3dy/2)
-        >>> get_coordinates(U)
+        >>> get_function_coordinates(U)
         ([t,x,y],[dt,dx,dy])
 
     """
     from sympy import Symbol, symbols
+
+    if not isinstance(function, Function):
+        raise ValueError("'function' should be a function")
 
     x = []
     dx = []
@@ -390,6 +394,44 @@ def get_coordinates(function):
 
     return x, dx
 
+
+def get_coordinate_system(expr):
+    """ Return the coordinates system used as a tuple ([xi],[dxi])
+
+    For random variable, 'omega' is not considered.
+
+    Example
+    -------
+
+    >>> t,x,y = symbols('t x y')
+    >>> u = Function('u')(t,x,y)
+    >>> get_coordinates(u)
+    ([t, x, y],[dt, dx, dy])
+
+    For a random variable: omega is ignored
+
+    >>> u = Function('u')(t,x,y, omega)
+    >>> get_coordinates(u)
+    ([t, x, y],[dt, dx, dy])
+
+    """
+
+    # todo: update to apply for equation defined by 'Eq'
+    # 1. Get the coordinate system used.
+    functions = expr.atoms(Function)
+
+    # 2. Extract the coordinate system of each function.
+    coordinates = [[], []]
+    for function in functions:
+        coordinate = get_function_coordinates(function)
+        for xi, dxi in zip(coordinate[0], coordinate[1]):
+            if xi is omega:
+                continue
+            if not xi in coordinates[0]:
+                coordinates[0].append(xi)
+                coordinates[1].append(dxi)
+
+    return coordinates
 
 def get_trend(equation):
     """
