@@ -17,3 +17,4 @@ pydap.egg-info/
 **/.*.swp
 
 example/pkf-dataset.npy
+pdenetgen/symbolic/symbolic
