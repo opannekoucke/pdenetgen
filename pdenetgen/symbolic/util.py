@@ -18,6 +18,22 @@ class ScalarSymbol(Symbol):
 class TrainableScalar(Symbol):
     """
     Trainable Scalar for data-driven and physic-informed dynamics
+
+    Description
+    -----------
+
+    init_value  :   Set the initial value of the unknown quantity.
+                    When init_value = None (default value) then, the initial value
+                    is a sample of the Gaussian law of mean 'mean' and standard deviation 'stddev'
+    mean        :   Mean of the Gaussian sample to set the initial value (when init_value=None)
+    stddev      :   Standard deviation of the Gaussian sample (when init_value=None)
+    wl2         :   l2 penalty used when not wl2 is not None.
+
+    Example
+    -------
+
+    >>> a = TrainableScalar('a') # Configure the unknown quantity as an unknown initialized by a Gaussian (0,1)
+    >>> b = TrainableScalar('b', init_value= 0.001)
     """
 
     options = ['init_value','use_bias','mean','stddev','seed','wl2']
