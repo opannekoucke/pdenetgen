@@ -22,7 +22,7 @@ class TrainableScalar(Symbol):
 
     options = ['init_value','use_bias','mean','stddev','seed','wl2']
 
-    def __new__(cls, name, init_value=0, use_bias=False, mean=0., stddev=1., seed=None, wl2=None, **assumptions):
+    def __new__(cls, name, init_value=None, use_bias=False, mean=0., stddev=1., seed=None, wl2=None, **assumptions):
         instance = super(TrainableScalar, cls).__new__(cls, name, **assumptions)
         instance.init_value = init_value
         instance.use_bias = use_bias
