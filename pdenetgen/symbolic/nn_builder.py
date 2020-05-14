@@ -1,8 +1,9 @@
 from sympy import Mul, Add, Rational, Float, Integer, Pow, Function
 from .util import ScalarSymbol, FunctionSymbol, TrainableScalar
 from .tool import clean_latex_name
-import keras
+#import keras
 import tensorflow as tf
+import tensorflow.keras as keras
 import numpy as np
 
 
