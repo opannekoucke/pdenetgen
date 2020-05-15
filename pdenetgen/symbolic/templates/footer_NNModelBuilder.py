@@ -302,7 +302,9 @@ template = '''
         reshape_trends = [] 
         for trend, dimension in zip(trends, dimensions):
             
-            shape = tuple(dim.value for dim in trend.shape[1:])
+            #shape = tuple(dim.value for dim in trend.shape[1:])
+            # update from keras -> tensorflow.keras
+            shape = tuple(dim for dim in trend.shape[1:])
             
             if dimension==1 or dimension==2:
                 # for 1D fields like (128,1) transform into (1,128,1)
