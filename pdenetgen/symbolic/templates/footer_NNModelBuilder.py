@@ -264,24 +264,40 @@ template = '''
         
         inputs = [u, V, nu_u_xx]
         """
-        
+
+        def get_slice(dimension, k):
+            def func(x):
+                if dimension == 1:
+                    return x[:,k,:,:]
+                elif dimension == 2:
+                    return x[:,k,:,:]
+            return func
+            
+        def get_slice_3d(start,end):
+            def func(x):
+                return x[:,start:end,:,:,:]
+            return func
+
         inputs = []
         if max_dimension in [1,2]:
             for k in range(len(shapes)):
-                if max_dimension==1:
-                    inputs.append(keras.layers.Lambda(lambda x : x[:,k,:,:])(state))
-                if max_dimension==2:
-                    inputs.append(keras.layers.Lambda(lambda x : x[:,k,:,:,:])(state))                    
+                inputs.append(keras.layers.Lambda(get_slice(max_dimension,k))(state))
+                #if max_dimension==1:
+                #    inputs.append(keras.layers.Lambda(lambda x : x[:,k,:,:])(state))
+                #
+                #if max_dimension==2:
+                #    inputs.append(keras.layers.Lambda(lambda x : x[:,k,:,:,:])(state))                    
         else:
             k=0
             for shape, dimension in zip(shapes, dimensions):
                 if dimension==2:
-                    inputs.append(keras.layers.Lambda(lambda x : x[:,k,:,:,:])(state))
+                    #inputs.append(keras.layers.Lambda(lambda x : x[:,k,:,:,:])(state))
+                    inputs.append(keras.layers.Lambda(get_slice(dimension,k))(state))
                     k += 1 
                 if dimension==3:
                     start = k
                     end = start+shape[0]
-                    inputs.append(keras.layers.Lambda(lambda x : x[:,start:end,:,:,:])(state))
+                    inputs.append(keras.layers.Lambda(get_slice_3d(start,end))(state))
                     k = end
                     
         # 2. Compute the trend
