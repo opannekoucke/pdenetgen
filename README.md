@@ -72,10 +72,10 @@ The use of `TrainableScalar` is the simplest way to try a closure designed from 
 
 Another implemention is possible that relies on the introduction
 of an external neural network, for instance a deep neural network of your choice that you have to build by yourself and
-that can be plugged to the neural network generated from Eq.(1)
+that can be plugged to the neural network generated from Eq.(7)
 . 
 
-(see the notebook ./example/pdenetgen-NN-PKF_burgers_learn-exogenous-closure.ipynb where the closure is provided as the implementation of Eq.(2) -- you can try your own NN that can be different from the candidate Eq.(2))
+(see the notebook ./example/pdenetgen-NN-PKF_burgers_learn-exogenous-closure.ipynb where the closure is provided as the implementation of Eq.(8) -- you can try your own NN that can be different from the candidate Eq.(8))
 
 Install
 -------
