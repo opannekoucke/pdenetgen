@@ -90,7 +90,7 @@ Install
 
 Citation
 --------
-
+```
 @Article{gmd-2020-35,
 AUTHOR = {Pannekoucke, O. and Fablet, R.},
 TITLE = {PDE-NetGen 1.0: from symbolic PDE representations of physical
@@ -101,3 +101,4 @@ YEAR = {2020},
 PAGES = {1--14},
 DOI = {10.5194/gmd-2020-35}
 }
+```
