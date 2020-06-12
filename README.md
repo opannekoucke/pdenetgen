@@ -8,7 +8,7 @@
 - [Introduction](#introduction)
 - [Example](#example)
   - [Implementation of a simple PDE: the 2D diffusion equation](#implementation-of-a-simple-pde-the-2d-diffusion-equation)
-  - [Estimation of a unknown physical term](#estimation-of-a-unknown-physical-term)
+  - [Estimation of an unknown physical term](#estimation-of-an-unknown-physical-term)
     - [1. Implementation using `TrainableScalar`](#1-implementation-using-trainablescalar)
     - [2. Implementation using an external neural network (the exogenous case)](#2-implementation-using-an-external-neural-network-the-exogenous-case)
 - [Install](#install)
@@ -36,7 +36,7 @@ A diffusion over a 2D domain can be implemented as
 
 (see the notebook [./example/pdenetgen-diffusion2D.ipynb](./example/pdenetgen-diffusion2D.ipynb))
 
-### Estimation of a unknown physical term
+### Estimation of an unknown physical term
 
 As an example, we consider a situation that can be encountered in physics where the 
 dynamics makes appear an unkown term to determine from a dataset. For the illustration, we consider the dynamics 
