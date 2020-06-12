@@ -5,7 +5,6 @@
 ---
 <h2><center>Contents</center></h2>
 
-- [- Citation](#ullicitationliul)
 - [Introduction](#introduction)
 - [Example](#example)
   - [Implementation of a simple PDE: the 2D diffusion equation](#implementation-of-a-simple-pde-the-2d-diffusion-equation)
@@ -42,33 +41,16 @@ A diffusion over a 2D domain can be implemented as
 As an example, we consider a situation that can be encountered in physics where the 
 dynamics makes appear an unkown term to determine from a dataset. For the illustration, we consider the dynamics 
 
-$$
-(1)\qquad 
-\left\{
-\begin{array}{ccl}
-\frac{\partial}{\partial t} u &=& \kappa \frac{\partial^{2}}{\partial x^{2}} u - u \frac{\partial}{\partial x} u - \frac{  \frac{\partial}{\partial x} \operatorname{{V_{u}}} }{2},\\
-%%%%%
-\frac{\partial}{\partial t} \operatorname{{V_{u}}} &=& - \frac{\kappa \operatorname{{V_{u}}}}{ \operatorname{{\nu_{u,xx}}} } + \kappa \frac{\partial^{2}}{\partial x^{2}} \operatorname{{V_{u}}} - \frac{\kappa \left(\frac{\partial}{\partial x} \operatorname{{V_{u}}}\right)^{2}}{2 \operatorname{{V_{u}}}}-  u  \frac{\partial}{\partial x} \operatorname{{V_{u}}} - 2 \operatorname{{V_{u}}} \frac{\partial}{\partial x} u,\\
-%%%%%
-\frac{\partial}{\partial t} \operatorname{{\nu_{u,xx}}} &=& 4 \kappa \operatorname{{\nu_{u,xx}}}^{2} \mathbb E\left[\operatorname{{\varepsilon_{u}}} \frac{\partial^{4}}{\partial x^{4}} \operatorname{{\varepsilon_{u}}}\right] - 3 \kappa \frac{\partial^{2}}{\partial x^{2}} \operatorname{{\nu_{u,xx}}}- \kappa + \\ 
-& &\frac{6 \kappa \left(\frac{\partial}{\partial x} \operatorname{{\nu_{u,xx}}}\right)^{2}}{\operatorname{{\nu_{u,xx}}}} - \frac{2 \kappa \operatorname{{\nu_{u,xx}}} \frac{\partial^{2}}{\partial x^{2}} \operatorname{{V_{u}}} }{  \operatorname{{V_{u}}}  } +
-\frac{\kappa  \frac{\partial}{\partial x} \operatorname{{V_{u}}}  \frac{\partial}{\partial x} \operatorname{{\nu_{u,xx}}}}{ \operatorname{{V_{u}}}  } +
-	\frac{2 \kappa \operatorname{{\nu_{u,xx}}}  \left(\frac{\partial}{\partial x} \operatorname{{V_{u}}}\right)^{2}  }{  \operatorname{{V_{u}}}^{2}  } -  u  \frac{\partial}{\partial x} \operatorname{{\nu_{u,xx}}} +
-	2 \operatorname{{\nu_{u,xx}}}  \frac{\partial}{\partial x} u 
-\end{array}
-\right.
-$$
-where the term $\mathbb E\left[\operatorname{{\varepsilon_{u}}} \frac{\partial^{4}}{\partial x^{4}} \operatorname{{\varepsilon_{u}}}\right]$ is unkown.
+![pkf-system](./figures/pkf-system.png)
+
+where the term ![unknown term](./figures/expectation.png) is unkown.
 
 
 With PDE-NetGen, we can design a closure from the data. For the 
 illustration we consider a candidate for the closure, given by
 
-<img src="https://render.githubusercontent.com/render/math?math=(2)\qquad \mathbb E\left[\operatorname{{\varepsilon_{u}}} \frac{\partial^{4}}{\partial x^{4}} \operatorname{{\varepsilon_{u}}}\right]
-\sim 
-a \frac{\frac{\partial^{2}}{\partial x^{2}} \operatorname{{\nu_{u,xx}}}{\left(t,x \right)}}{\operatorname{{\nu_{u,xx}}}^{2}{\left(t,x \right)}} + 
-b \frac{1}{ \operatorname{{\nu_{u,xx}}}^{2}{\left(t,x \right)}} +
-c \frac{\left(\frac{\partial}{\partial x} \operatorname{{\nu_{u,xx}}}{\left(t,x \right)}\right)^{2}}{\operatorname{{\nu_{u,xx}}}^{3}{\left(t,x \right)}},">
+![pkf-closure](./figures/pkf-closure.png)
+
 where $(a,b,c)$ are unkowns.
 
 Two implementations can be considered. 
