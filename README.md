@@ -5,6 +5,7 @@
 ---
 <h2><center>Contents</center></h2>
 
+- [- Citation](#ullicitationliul)
 - [Introduction](#introduction)
 - [Example](#example)
   - [Implementation of a simple PDE: the 2D diffusion equation](#implementation-of-a-simple-pde-the-2d-diffusion-equation)
@@ -63,11 +64,11 @@ where the term $\mathbb E\left[\operatorname{{\varepsilon_{u}}} \frac{\partial^{
 With PDE-NetGen, we can design a closure from the data. For the 
 illustration we consider a candidate for the closure, given by
 
-$$(2)\qquad \mathbb E\left[\operatorname{{\varepsilon_{u}}} \frac{\partial^{4}}{\partial x^{4}} \operatorname{{\varepsilon_{u}}}\right]
+<img src="https://render.githubusercontent.com/render/math?math=(2)\qquad \mathbb E\left[\operatorname{{\varepsilon_{u}}} \frac{\partial^{4}}{\partial x^{4}} \operatorname{{\varepsilon_{u}}}\right]
 \sim 
 a \frac{\frac{\partial^{2}}{\partial x^{2}} \operatorname{{\nu_{u,xx}}}{\left(t,x \right)}}{\operatorname{{\nu_{u,xx}}}^{2}{\left(t,x \right)}} + 
 b \frac{1}{ \operatorname{{\nu_{u,xx}}}^{2}{\left(t,x \right)}} +
-c \frac{\left(\frac{\partial}{\partial x} \operatorname{{\nu_{u,xx}}}{\left(t,x \right)}\right)^{2}}{\operatorname{{\nu_{u,xx}}}^{3}{\left(t,x \right)}},$$
+c \frac{\left(\frac{\partial}{\partial x} \operatorname{{\nu_{u,xx}}}{\left(t,x \right)}\right)^{2}}{\operatorname{{\nu_{u,xx}}}^{3}{\left(t,x \right)}},">
 where $(a,b,c)$ are unkowns.
 
 Two implementations can be considered. 
