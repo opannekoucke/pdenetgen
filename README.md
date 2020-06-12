@@ -34,7 +34,7 @@ A diffusion over a 2D domain can be implemented as
 
 ![Implementation of a 2D diffusion equation](./figures/Fig1.png)
 
-(see the notebook ./example/pdenetgen-diffusion2D.ipynb)
+(see the notebook [./example/pdenetgen-diffusion2D.ipynb](./example/pdenetgen-diffusion2D.ipynb))
 
 ### Estimation of a unknown physical term
 
@@ -66,7 +66,8 @@ This is implemented by using `TrainableScalar` as follows:
 
 The use of `TrainableScalar` is the simplest way to try a closure designed from partial derivatives.
 
-(see the notebook ./example/pdenetgen-NN-PKF_burgers_learn-TrainableScalar-closure.ipynb)
+(see the notebook 
+[./example/pdenetgen-NN-PKF_burgers_learn-TrainableScalar-closure.ipynb](./example/pdenetgen-NN-PKF_burgers_learn-TrainableScalar-closure.ipynb))
 
 #### 2. Implementation using an external neural network (the exogenous case)
 
@@ -75,7 +76,9 @@ of an external neural network, for instance a deep neural network of your choice
 that can be plugged to the neural network generated from Eq.(7)
 . 
 
-(see the notebook ./example/pdenetgen-NN-PKF_burgers_learn-exogenous-closure.ipynb where the closure is provided as the implementation of Eq.(8) -- you can try your own NN that can be different from the candidate Eq.(8))
+(see the notebook 
+[./example/pdenetgen-NN-PKF_burgers_learn-exogenous-closure.ipynb](./example/pdenetgen-NN-PKF_burgers_learn-exogenous-closure.ipynb)
+where the closure is provided as the implementation of Eq.(8) -- you can try your own NN that can be different from the candidate Eq.(8))
 
 Install
 -------
