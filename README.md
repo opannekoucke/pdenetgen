@@ -3,9 +3,9 @@
 
 
 ---
+
 <h2><center>Contents</center></h2>
 
-- [- Citation](#ullicitationliul)
 - [Introduction](#introduction)
 - [Example](#example)
   - [Implementation of a simple PDE: the 2D diffusion equation](#implementation-of-a-simple-pde-the-2d-diffusion-equation)
@@ -14,6 +14,7 @@
     - [2. Implementation using an external neural network (the exogenous case)](#2-implementation-using-an-external-neural-network-the-exogenous-case)
 - [Install](#install)
 - [Citation](#citation)
+
 ---
 
 
