@@ -5,6 +5,7 @@
 ---
 <h2><center>Contents</center></h2>
 
+- [- Citation](#ullicitationliul)
 - [Introduction](#introduction)
 - [Example](#example)
   - [Implementation of a simple PDE: the 2D diffusion equation](#implementation-of-a-simple-pde-the-2d-diffusion-equation)
@@ -90,15 +91,20 @@ Install
 
 Citation
 --------
+
+Pannekoucke, O. and Fablet, R.: PDE-NetGen 1.0: from symbolic partial differential equation (PDE) representations of physical processes to trainable neural network representations, Geosci. Model Dev., 13, 3373–3382, https://doi.org/10.5194/gmd-13-3373-2020, 2020. 
+
 ```
-@Article{gmd-2020-35,
-AUTHOR = {Pannekoucke, O. and Fablet, R.},
-TITLE = {PDE-NetGen 1.0: from symbolic PDE representations of physical
-processes to trainable neural network representations},
-JOURNAL = {Geoscientific Model Development},
-VOLUME = {2020},
-YEAR = {2020},
-PAGES = {1--14},
-DOI = {10.5194/gmd-2020-35}
+@Article{Pannekoucke2020GMD,
+  author    = {Olivier Pannekoucke and Ronan Fablet},
+  journal   = {Geoscientific Model Development},
+  title     = {{PDE}-{NetGen} 1.0: from symbolic partial differential equation ({PDE}) representations of physical processes to trainable neural network representations},
+  year      = {2020},
+  month     = {jul},
+  number    = {7},
+  pages     = {3373--3382},
+  volume    = {13},
+  doi       = {10.5194/gmd-13-3373-2020},
+  publisher = {Copernicus {GmbH}},  
 }
 ```
