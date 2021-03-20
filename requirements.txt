@@ -4,7 +4,7 @@ cycler==0.10.0
 gast==0.3.3
 grpcio==1.27.2
 h5py==2.10.0
-Jinja2==2.11.1
+Jinja2==2.11.3
 kiwisolver==1.1.0
 Markdown==3.2.1
 MarkupSafe==1.1.1
