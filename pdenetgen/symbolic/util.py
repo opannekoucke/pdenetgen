@@ -6,6 +6,8 @@ from sympy import Derivative, Function, Symbol, symbols, Add
 from .tool import clean_latex_name
 import sympy
 
+from .constants import t as time_coordinate
+
 omega = Symbol('omega')
 
 
@@ -160,7 +162,7 @@ class PDESystem(object):
     """ Symbolic system of partial differential equations
     """
 
-    _time_symbol = symbols('t')
+    _time_symbol = time_coordinate
 
     def __init__(self, equations, name=''):
 
@@ -457,7 +459,7 @@ def get_trend(equation):
     """
     trends = set()
     for derivative in equation.atoms(Derivative):
-        if derivative.args[1] == (symbols('t'), 1):
+        if derivative.args[1] == (time_coordinate, 1):
             trends.add(derivative)
     if len(trends) == 1:
         trends = trends.pop()
