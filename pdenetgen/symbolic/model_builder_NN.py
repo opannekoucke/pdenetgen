@@ -6,9 +6,9 @@ from .model_builder import MetaDerivative as SuperMetaDerivative
 from .model_builder import MetaFunction as SuperMetaFunction
 from .model_builder import MetaPrognosticFunction as SuperMetaPrognosticFunction
 from .model_builder import MetaCoordinate as SuperMetaCoordinate
-from .util import get_coordinates
+from .util import get_function_coordinates
 from .finite_difference import finite_difference, get_displacement
-
+from .constants import t as time_coordinate
 
 class MetaFunction(SuperMetaFunction):
 
@@ -28,7 +28,8 @@ class MetaFunction(SuperMetaFunction):
                 f(t)            (1,)
         """
         #t = self._time_symbol
-        t = Symbol('t')
+        #t = Symbol('t')
+        t = time_coordinate
         coordinates = self.as_symbolic.args
 
         if coordinates == (t,):
@@ -56,7 +57,7 @@ class Kernel(object):
     def __init__(self,derivative):
         self._derivative = derivative
         self._function = derivative.args[0]
-        self._coordinates,self._dxs = get_coordinates(self._function)
+        self._coordinates,self._dxs = get_function_coordinates(self._function)
         self._suppress_time = False
         self._dimension = len(self._coordinates)
         if self._time_symbol == self._coordinates[0]:

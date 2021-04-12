@@ -15,5 +15,9 @@ pydap.egg-info/
 
 # swap files
 **/.*.swp
+# tmp
+**/tmp/
 
 example/pkf-dataset.npy
+pdenetgen/symbolic/symbolic
+example/figures/

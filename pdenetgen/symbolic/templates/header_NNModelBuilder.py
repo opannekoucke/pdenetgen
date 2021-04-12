@@ -1,6 +1,6 @@
 template = '''from pdenetgen.model import Model
 import numpy as np
-import keras
+import tensorflow.keras as keras
 from pdenetgen.symbolic.nn_builder import DerivativeFactory, TrainableScalarLayerFactory
 
 class {{class_name}}(Model):

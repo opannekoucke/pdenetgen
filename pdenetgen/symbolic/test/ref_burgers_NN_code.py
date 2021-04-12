@@ -1,46 +1,122 @@
-template = '''
+ref_burgers_NN_code = '''from pdenetgen.model import Model
+import numpy as np
+import tensorflow.keras as keras
+from pdenetgen.symbolic.nn_builder import DerivativeFactory, TrainableScalarLayerFactory
+
+class Burgers(Model):
+
+    # Prognostic functions (sympy functions):
+    prognostic_functions = (
+            'u',    # Write comments on the function here
+        )
+
+    
+    
+    # Spatial coordinates
+    coordinates = (
+            'x',    # Write comments on the coordinate here
+        )
+
+    
+
+    
+    # Set constants
+    constants = (
+            'kappa',    # Writes comment on the constant here
+        )
+    
+
+    def __init__(self, shape=None, lengths=None, **kwargs):
+
+        super().__init__() # Time scheme is set from Model.__init__()
+                
+        #---------------------------------
+        # Set index array from coordinates
+        #---------------------------------
+        
+        # a) Set shape
+        shape = len(self.coordinates)*(100,) if shape is None else shape 
+        if len(shape)!=len(self.coordinates):
+            raise ValueError(f"len(shape) {len(shape)} is different from len(coordinates) {len(self.coordinates)}")
+        else:
+            self.shape = shape
+    
+        # b) Set input shape for coordinates
+        self.input_shape_x = shape[0]
+        
+                
+        # c) Set lengths
+        lengths = len(self.coordinates)*(1.0,) if lengths is None else lengths
+        if len(lengths)!=len(self.coordinates):
+            raise ValueError(f"len(lengths) {len(lengths)} is different from len(coordinates) {len(self.coordinates)}")        
+        else:
+            self.lengths = lengths
+            
+        # d) Set indexes
+        self._index = {}
+        for k,coord in enumerate(self.coordinates):
+            self._index[(coord,0)] = np.arange(self.shape[k], dtype=int)            
+        
+        # Set x/dx
+        #-------------
+        self.dx = tuple(length/shape for length, shape in zip(self.lengths, self.shape))
+        self.x = tuple(self.index(coord,0)*dx for coord, dx in zip(self.coordinates, self.dx))
+        self.X = np.meshgrid(*self.x)
+
+        
+
+        
+        #---------------------------
+        # Set constants of the model
+        #---------------------------
+          
+        # Set a default nan value for constants
+        self.kappa = np.nan # @@ set constant value @@
+        
+                
+        # Set constant values from external **kwargs (when provided)
+        for key in kwargs:
+            if key in self.constants:
+                setattr(self, key, kwargs[key])
+        
+        # Alert when a constant is np.nan
+        for constant in self.constants:
+            if getattr(self, constant) is np.nan:
+                print(f"Warning: constant `{constant}` has to be set")
+        
+        
+        # Set NN models
+        self._trend_model = None
+        self._exogenous_model = None
+    
+    def index(self, coord, step:int):
+        """ Return int array of shift index associated with coordinate `coord` for shift `step` """
+        # In this implementation, indexes are memory saved in a dictionary, feed at runtime 
+        if (coord,step) not in self._index:
+            self._index[(coord,step)] = (self._index[(coord,0)]+step)%self.shape[self.coordinates.index(coord)]
+        return self._index[(coord,step)] 
+    
     def _make_trend_model(self):
         """ Generate the NN used to compute the trend of the dynamics """
-        {% if constant_functions_flag -%} 
-        # Alias for constant functions
-        #-----------------------------
-        {% for function in constant_functions -%}
-        {{function.as_keyvar}} = self.{{function.as_keyvar}}
-        if {{function.as_keyvar}} is np.nan:
-            raise ValueError("Constant function '{{function.as_keyvar}}' is not set")
-        {% endfor %}          
-        
-        {% endif %}                
-        {% if constants_flag -%}
+                        
         # Alias for constants
         #--------------------
-        {% for constant in constants -%}
-        {{constant.as_keyvar}} = self.{{constant.as_keyvar}}
-        if {{constant.as_keyvar}} is np.nan:
-            raise ValueError("Constant '{{constant.as_keyvar}}' is not set")
-        {% endfor %}         
-        {% endif %}        
+        kappa = self.kappa
+        if kappa is np.nan:
+            raise ValueError("Constant 'kappa' is not set")
+                 
+                
         
         # Set input layers
         #------------------
         # Set Alias for coordinate input shapes
-        {% for coord in coordinates -%}
-        {{coord.input_shape}} = self.{{coord.input_shape}}
-        {% endfor %}        
+        input_shape_x = self.input_shape_x
+                
         # Set input shape for prognostic functions
-        {% for function in prognostic_functions -%}
-        {{function.as_keyvar}} = keras.layers.Input(shape =({% for shape in function.input_shape %}{{shape}},{% endfor %}))
-        {% endfor %} 
-        {% if constant_functions_flag -%}
-        # Set input shape for constant functions 
-        {% for function in constant_functions -%}
-        {{function.as_keyvar}} = keras.layers.Input(shape =({% for shape in function.input_shape %}{{shape}},{% endfor %}))
-        {% endfor %}{% endif %}        
-        {% if exogenous_functions_flag -%}
-        # Set input shape for exogenous functions 
-        {% for function in exogenous_functions -%}
-        {{function.as_keyvar}} = keras.layers.Input(shape =({% for shape in function.input_shape %}{{shape}},{% endfor %}))
-        {% endfor %}{% endif %}
+        u = keras.layers.Input(shape =(input_shape_t,input_shape_x,1,))
+         
+                
+        
          
         # Keras code
          
@@ -50,37 +126,38 @@ template = '''
         #
         #  Warning: might be modified to fit appropriate boundary conditions. 
         #
-        {% for derivative in spatial_derivatives -%}
-        {% for line in derivative.as_code %}{{line}}
-        {% endfor %}
-        {% endfor %}        
+        kernel_Du_x_o2 = np.asarray([self.dx[self.coordinates.index('x')]**(-2),
+        -2/self.dx[self.coordinates.index('x')]**2,
+        self.dx[self.coordinates.index('x')]**(-2)]).reshape((3,)+(1,1))
+        Du_x_o2 = DerivativeFactory((3,),kernel=kernel_Du_x_o2,name='Du_x_o2')(u)
+        
+        kernel_Du_x_o1 = np.asarray([-1/(2*self.dx[self.coordinates.index('x')]),0.0,
+        1/(2*self.dx[self.coordinates.index('x')])]).reshape((3,)+(1,1))
+        Du_x_o1 = DerivativeFactory((3,),kernel=kernel_Du_x_o1,name='Du_x_o1')(u)
+        
+                
         
         # 3) Implementation of the trend as NNet
         
-        {% for line in trend_code -%}
-        {{line}}
-        {% endfor%}
+        #
+        # Computation of trend_u
+        #
+        sc_mul_0 = keras.layers.Lambda(lambda x: kappa*x,name='ScalarMulLayer_0')(Du_x_o2)
+        mul_0 = keras.layers.multiply([Du_x_o1,u],name='MulLayer_0')
+        sc_mul_1 = keras.layers.Lambda(lambda x: -1.0*x,name='ScalarMulLayer_1')(mul_0)
+        trend_u = keras.layers.add([sc_mul_0,sc_mul_1],name='AddLayer_0')
+        
         
         # 4) Set 'input' of model
         inputs = [
                 # Prognostic functions
-                {% for function in prognostic_functions -%}     
-                {{function.as_keyvar}},{% endfor %}
-                {% if exogenous_functions_flag -%}
-                # Exogenous functions 
-                {% for function in exogenous_functions -%}    
-                {{function.as_keyvar}},{% endfor %}
-                {% endif -%}{% if constant_functions_flag -%}
-                # Constant functions
-                {% for function in constant_functions -%}    
-                {{function.as_keyvar}},{% endfor %}{% endif %}
+                u,
+                
             ]         
    
         # 5) Set 'outputs' of model 
         outputs = [
-            {% for function in prognostic_functions -%}
-            {{function.trend}},
-            {% endfor -%}
+            trend_u,
             ]     
         
         model = keras.models.Model(inputs=inputs, outputs=outputs)
@@ -100,37 +177,22 @@ template = '''
         dstate = np.zeros(state.shape)
 
         #   b) Set pointers on output array `dstate` for the computation of the physical trend (alias only).
-        {% for function in prognostic_functions -%}
-        d{{function.as_keyvar}} = dstate[{{function.index}}]
-        {% endfor %}
+        du = dstate[0]
+        
 
         # Load physical functions from state
         #------------------------------------
-        {% for function in prognostic_functions -%}
-        {{function.as_keyvar}} = state[{{function.index}}]
-        {% endfor %}          
+        u = state[0]
+                  
          
-        {% if exogenous_functions_flag %}
-        # Compute exogenous functions
-        #-----------------------------
-        exogenous = self.compute_exogenous(t, state) # None if no exogenous function exists
-        {% for function in exogenous_functions -%}
-        {{function.as_keyvar}} = exogenous[{{function.index}}]
-        {% endfor %}{% endif %}
+        
         
         # Compute the trend value from model.predict
         #-------------------------------------------  
         inputs = [
             # Prognostic functions
-                {% for function in prognostic_functions -%}{{function.as_keyvar}},
-                {% endfor -%}{% if exogenous_functions_flag -%}
-            # Exogenous functions 
-                {% for function in exogenous_functions %}{{function.as_keyvar}},
-                {% endfor %}{% endif -%}{% if constant_functions_flag -%}
-            # Constant functions 
-                {% for function in constant_functions %}self.{{function.as_keyvar}},
-                {% endfor %}{% endif -%}
-            ]
+                u,
+                ]
         
         dstate = self._trend_model.predict( inputs )
         
@@ -342,25 +404,4 @@ template = '''
         
         # 2.5 Compute the model       
         self._dynamical_trend = keras.models.Model(inputs=state,outputs=trends)    
-                
-    {% if exogenous_functions_flag %}
-    
-    def _make_exogenous_model(self):
-        raise NotImplementedError
-    
-    def compute_exogenous(self, t, state):
-        """ Computation of exogenous functions """
-        if self._exogenous_model is None:
-            self._make_exogenous_model()
-        
-        raise NotImplementedError # if no exogenous functions are needed
-    {% endif %}
-
-'''
-
-# todo: Updates name of method keras model for trend.
-''' 
-  * [ ] change names of keras models for trend so to facilitate their use
-        - _trend_model -> _trend_from_list ?
-        - _dynamical_trend -> _trend_from_array ? 
 '''

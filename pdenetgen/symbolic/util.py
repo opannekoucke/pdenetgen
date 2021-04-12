@@ -5,7 +5,10 @@
 from sympy import Derivative, Function, Symbol, symbols, Add
 from .tool import clean_latex_name
 import sympy
-import numpy as np
+
+from .constants import t as time_coordinate
+
+omega = Symbol('omega')
 
 
 class ScalarSymbol(Symbol):
@@ -17,11 +20,27 @@ class ScalarSymbol(Symbol):
 class TrainableScalar(Symbol):
     """
     Trainable Scalar for data-driven and physic-informed dynamics
+
+    Description
+    -----------
+
+    init_value  :   Set the initial value of the unknown quantity.
+                    When init_value = None (default value) then, the initial value
+                    is a sample of the Gaussian law of mean 'mean' and standard deviation 'stddev'
+    mean        :   Mean of the Gaussian sample to set the initial value (when init_value=None)
+    stddev      :   Standard deviation of the Gaussian sample (when init_value=None)
+    wl2         :   l2 penalty used when not wl2 is not None.
+
+    Example
+    -------
+
+    >>> a = TrainableScalar('a') # Configure the unknown quantity as an unknown initialized by a Gaussian (0,1)
+    >>> b = TrainableScalar('b', init_value= 0.001)
     """
 
     options = ['init_value','use_bias','mean','stddev','seed','wl2']
 
-    def __new__(cls, name, init_value=0, use_bias=False, mean=0., stddev=1., seed=None, wl2=None, **assumptions):
+    def __new__(cls, name, init_value=None, use_bias=False, mean=0., stddev=1., seed=None, wl2=None, **assumptions):
         instance = super(TrainableScalar, cls).__new__(cls, name, **assumptions)
         instance.init_value = init_value
         instance.use_bias = use_bias
@@ -143,7 +162,7 @@ class PDESystem(object):
     """ Symbolic system of partial differential equations
     """
 
-    _time_symbol = symbols('t')
+    _time_symbol = time_coordinate
 
     def __init__(self, equations, name=''):
 
@@ -351,7 +370,7 @@ def remove_eval_derivative(expr):
     return expr.subs(eval_derivative).doit()
 
 
-def get_coordinates(function):
+def get_function_coordinates(function):
     """ Given a function evaluated from finite difference: return the coordinate system and its differential forms
 
     Example
@@ -362,11 +381,14 @@ def get_coordinates(function):
         >>> U = Function('U')(t,x,y)
         >>> U.subs({x:x+dx, y:y-3dy/2})
         U(t,x+dx,y-3dy/2)
-        >>> get_coordinates(U)
+        >>> get_function_coordinates(U)
         ([t,x,y],[dt,dx,dy])
 
     """
     from sympy import Symbol, symbols
+
+    if not isinstance(function, Function):
+        raise ValueError("'function' should be a function")
 
     x = []
     dx = []
@@ -391,6 +413,44 @@ def get_coordinates(function):
     return x, dx
 
 
+def get_coordinate_system(expr):
+    """ Return the coordinates system used as a tuple ([xi],[dxi])
+
+    For random variable, 'omega' is not considered.
+
+    Example
+    -------
+
+    >>> t,x,y = symbols('t x y')
+    >>> u = Function('u')(t,x,y)
+    >>> get_coordinates(u)
+    ([t, x, y],[dt, dx, dy])
+
+    For a random variable: omega is ignored
+
+    >>> u = Function('u')(t,x,y, omega)
+    >>> get_coordinates(u)
+    ([t, x, y],[dt, dx, dy])
+
+    """
+
+    # todo: update to apply for equation defined by 'Eq'
+    # 1. Get the coordinate system used.
+    functions = expr.atoms(Function)
+
+    # 2. Extract the coordinate system of each function.
+    coordinates = [[], []]
+    for function in functions:
+        coordinate = get_function_coordinates(function)
+        for xi, dxi in zip(coordinate[0], coordinate[1]):
+            if xi is omega:
+                continue
+            if not xi in coordinates[0]:
+                coordinates[0].append(xi)
+                coordinates[1].append(dxi)
+
+    return coordinates
+
 def get_trend(equation):
     """
     Return all temporal trend from an equation ie Derivative(field,t)
@@ -399,7 +459,7 @@ def get_trend(equation):
     """
     trends = set()
     for derivative in equation.atoms(Derivative):
-        if derivative.args[1] == (symbols('t'), 1):
+        if derivative.args[1] == (time_coordinate, 1):
             trends.add(derivative)
     if len(trends) == 1:
         trends = trends.pop()
@@ -436,6 +496,17 @@ def get_derivative_partial_orders(derivative):
 
     return partial_orders
 
+def get_total_order(derivative):
+    """ Compute the total order of a derivative
+
+    Example:
+        >>> from sympy import Derivative, Function, symbols
+        >>> x,y = symbols('x y')
+        >>> get_total_order(Derivative( Function('u')(x,y), x,2,y,4))
+        6
+    """
+    partial_orders = get_derivative_partial_orders(derivative)
+    return sum([value for key,value in partial_orders.items()])
 
 class CoordinateSystem(object):
     """ Facilitate handling of coordinate system """
