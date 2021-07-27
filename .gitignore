@@ -4,7 +4,7 @@
 **/*.slides.html
 .idea
 pydap_*.tgz
-
+sandbox/
 # Documentation
 pydap/doc_sphinx/*
 
