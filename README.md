@@ -24,8 +24,17 @@ Introduction
 Bridging physics and deep learning is a topical challenge. While deep learning frameworks open avenues in physical science, the design of physically-consistent deep neural network architectures is an open issue. In the spirit of physics-informed NNs, PDE-NetGen package provides new means to automatically translate physical equations, given as PDEs, into neural network architectures. PDE-NetGen combines symbolic calculus and a neural network generator. The later exploits NN-based implementations of PDE solvers using Keras. With some knowledge of a problem, PDE-NetGen is a plug-and-play tool to generate physics-informed NN architectures. They provide computationally-efficient yet compact representations to address a variety of issues, including among others adjoint derivation, model calibration, forecasting, data assimilation as well as uncertainty quantification. As an illustration, the workflow is first presented for the 2D diffusion equation, then applied to the data-driven and physics-informed identification of uncertainty dynamics for the Burgers equation.
 
 
-  - Olivier Pannekoucke and Ronan Fablet. "[PDE-NetGen 1.0: from symbolic PDE representations of physical processes to trainable neural network representations]( https://doi.org/10.5194/gmd-2020-35)." accepted in Geoscientific Model Development (2020).
+  - O. Pannekoucke and R. Fablet, “PDE-NetGen 1.0: from symbolic partial differential equation (PDE) representations of physical processes to trainable neural network representations,” Geoscientific Model Development, vol. 13, no. 7, pp. 3373–3382, Jul. 2020, doi: 10.5194/gmd-13-3373-2020.
 
+
+<div>
+<div style="float:left">
+This work has been supported by the French INSU-LEFE, grant KAPA 
+</div>
+<div>
+<img src="./figures/logo_lefe.png" alt="logo lefe" width="50"/>  
+</div>
+</div>
 
 Example
 -------
