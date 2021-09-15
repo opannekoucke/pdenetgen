@@ -110,7 +110,7 @@ class ModelBuilder(object):
         by using the convention defined in the 'class _Derivative'.
 
     """
-    template_licence = None
+    template_licence = '#Bug Licence.. \n' #None
     template_header = None
     template_footer = None
     _default_name = 'NumModel'

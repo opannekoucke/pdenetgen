@@ -8,7 +8,7 @@ from .model_builder import MetaPrognosticFunction as SuperMetaPrognosticFunction
 from .model_builder import MetaCoordinate as SuperMetaCoordinate
 from .util import get_function_coordinates
 from .finite_difference import finite_difference, get_displacement
-
+from .constants import t as time_coordinate
 
 class MetaFunction(SuperMetaFunction):
 
@@ -28,7 +28,8 @@ class MetaFunction(SuperMetaFunction):
                 f(t)            (1,)
         """
         #t = self._time_symbol
-        t = Symbol('t')
+        #t = Symbol('t')
+        t = time_coordinate
         coordinates = self.as_symbolic.args
 
         if coordinates == (t,):
