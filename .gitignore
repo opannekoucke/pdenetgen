@@ -11,7 +11,7 @@ pydap/doc_sphinx/*
 # build
 build/
 dist/
-pydap.egg-info/
+**/*.egg-info/
 
 # swap files
 **/.*.swp

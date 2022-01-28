@@ -5,10 +5,10 @@ init:
 	pip install -r requirements.txt
 
 test:
-	python -m unittest discover
+	cd ./src/ ; python -m unittest discover
 verbose:
 	# Verbose test
-	python -m unittest discover -v
+	cd ./src/ ; python -m unittest discover -v
 
 install:
 	#rm -rf /opt/anaconda3/lib/python3.7/site-packages/pydap*
