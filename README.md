@@ -94,10 +94,19 @@ where the closure is provided as the implementation of Eq.(8) -- you can try you
 Install
 -------
 
+### Using pip
+
+PDE-NetGen is available from pip, and can be installed as 
+`pip install pdenetgen`
+
+### From github
  1. Clone the repository `git clone https://github.com/opannekoucke/pdenetgen.git`
  1. Install the package `make install` (or `python setup.py install`)
  1. Examples are given as jupyter notebooks (see ./example/) 
 
+### Remove pdenetgen
+
+`pip uninstall pdenetgen`
 
 Citation
 --------
